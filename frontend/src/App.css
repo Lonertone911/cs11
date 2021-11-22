@@ -1,0 +1,94 @@
+/*
+Copyright Jim Carty © 2021: cartyjim1@gmail.com
+
+This file is subject to the terms and conditions defined in file 'LICENSE.txt', which is part of this source code package.
+*/
+
+body { /* by default light theme */
+	--bg : white;
+	--text : black;
+	--footercolour: grey;
+
+	--buttoncolour : #6c757d;
+	--buttoncolourhover : #3e4347;
+
+	--tabletext : #212529;
+	--tablehoverfill : rgba( 0, 0, 0, .075 );
+
+	--selectbghover: rgba( 0, 0, 255, 0.05 );
+
+	--info1 : #eaeef3;
+	--info2 : #d8e0e9;
+	--info3 : #c4d0de;
+	--info4 : #aabbcf;
+
+	--bpcolor: #00193a; 
+
+	--linenumbers: #eaeef3;
+	--linenumberscolor : rgb( 158, 158, 158 );
+
+	--inputbg: #e9ecef;
+	--inputtext: #495057;
+
+	--alertsuccesscol: #155724;
+	--alertsuccessbg: #d4edda;
+	--alertsuccessborder: #c3e6cb;
+
+	--alertwarningcol: #856404;
+	--alertwarningbg: #fff3cd;
+	--alertwarningborder: #ffeeba;
+
+	--alertdangercol: #721c24;
+	--alertdangerbg: #f8d7da;
+	--alertdangerborder: #f5c6cb;
+
+	--buttonoutlinesecondarycol: #6c757d;
+	--buttonoutlinesecondaryborder: #6c757d;
+}
+
+body.dark {
+	--bg : #181a1b;
+	--text : #e8e6e3;
+	--footercolour: black;
+
+	--buttoncolour : #6c757d;
+	--buttoncolourhover : #a2a9ae;
+
+	--tabletext : #d5d9dd;
+	--tablehoverfill : rgba( 255, 255, 255, .075 );
+
+	--selectbghover: rgba( 0, 0, 255, 0.15 );
+
+	--info1 : #0b0f13;
+	--info2 : #1a242d;
+	--info3 : #253341;
+	--info4 : #384c61;
+
+	--bpcolor : #c7dfff;
+
+	--linenumbers: #282a36;
+	--linenumberscolor : #6D8A88;
+
+	--inputbg: #262e36;
+	--inputtext: #a9b0b7;
+
+	--alertsuccesscol: rgb(153, 230, 171);
+	--alertsuccessbg: rgb(26, 62, 41);
+	--alertsuccessborder: rgb(63, 154, 85);
+
+	--alertwarningcol: rgb(251, 215, 112);
+	--alertwarningbg: rgb(81, 62, 0);
+	--alertwarningborder: rgb(218, 163, 0);
+
+	--alertdangercol: rgb(225, 134, 143);
+	--alertdangerbg: rgb(67, 12, 17);
+	--alertdangerborder: rgb(186, 32, 48);
+
+	--buttonoutlinesecondarycol: rgb(158, 150, 137);
+	--buttonoutlinesecondaryborder: rgb(102, 94, 83);
+}
+
+body {
+	background-color: var( --bg );
+	color: var( --text );
+}
