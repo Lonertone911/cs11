@@ -1,0 +1,12 @@
+#
+#  Copyright Jim Carty © 2021: cartyjim1@gmail.com
+#
+#  This file is subject to the terms and conditions defined in file 'LICENSE.txt', which is part of this source code package.
+#
+
+db.*
+**/venv/
+**/*.pyc
+**/__pycache__/
+**/migrations/
+/frontend_build/

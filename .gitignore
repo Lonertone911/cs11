@@ -1,5 +1,5 @@
 # MacOS specific
-.DS_Store
+**/.DS_Store
 
 # Python Files
 *.pyc
@@ -7,3 +7,8 @@
 # Compiled Documents
 *.pdf
 *.ps
+release.zip
+release/
+
+# Other files
+secrets.json
