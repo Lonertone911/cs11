@@ -4,11 +4,12 @@
   This file is subject to the terms and conditions defined in file 'LICENSE.txt', which is part of this source code package.
 */
 
-import React from 'react';
+import React, { ReactElement } from 'react';
 
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 
 import { HomeView } from './components/HomeView';
+import { LoginView } from './components/LoginView';
 import { OtherView } from './components/OtherView';
 
 import { AlertBarUpdater, PageProps, Tokens } from './utils';
@@ -51,11 +52,11 @@ export default class App extends React.Component<Props, State> {
 			localStorage.setItem("theme", "light"); // by default light theme
 			document.body.classList.add('light');
 		} else {
-			document.body.classList.add('dark');
+			document.body.classList.add(localStorage.theme);
 		}
 	}
 
-	updateAlertBar = async (message: string, variant: string, show: boolean) => {
+	updateAlertBar = async (message: string | ReactElement, variant: string, show: boolean) => {
 		const updater: AlertBarUpdater = {
 			"message": message,
 			"variant": variant,
@@ -71,6 +72,7 @@ export default class App extends React.Component<Props, State> {
 					<Switch>
 						<Route exact path="/" render={(props) => <HomeView {...props} {...this.state} />} />
 						<Route exact path="/other" render={(props) => <OtherView {...props} {...this.state} />} />
+						<Route exact path="/login" render={(props) => <LoginView {...props} {...this.state} />} />
 					</Switch>
 				</Router>
 			</React.Fragment>

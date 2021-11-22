@@ -6,36 +6,43 @@
 
 import axios, { AxiosResponse } from 'axios';
 import { ok, err, Result } from 'neverthrow';
+import React, { ReactElement } from 'react';
 
 import config from './config';
 
+/* Authentication headers strings for internal REST call authentication */
 interface AuthenticationHeaders {
 	headers: {
 		Authorization: string
 	}
 }
 
+/* Alert bar updater type that allows errors to persist across pages */
 export interface AlertBarUpdater {
 	show: boolean,
-	message: string,
+	message: string | ReactElement,
 	variant: string
 }
 
+/* General props inherited by all pages from App.tsx */
 export interface PageProps {
-	updateAlertBar: (message: string, variant: string, show: boolean) => Promise<void>,
+	updateAlertBar: (message: string | ReactElement, variant: string, show: boolean) => Promise<void>,
 	alert: AlertBarUpdater, // only added as App.tsx's state is destructed and this is included as it is a psuedo-global set of value so that the alertbar can be shared across multiple pages
 }
 
+/* JWT Tokens types */
 export interface Tokens {
 	access: string,
 	refresh: string
 }
 
+/* Local storage type */
 export interface LStorage {
 	tokens: Tokens,
 	username: string
 }
 
+/* Internal refresh token types */
 interface RefreshTokensRESTSubmit {
 	refresh: string
 }
@@ -44,6 +51,45 @@ interface RefreshTokensREST {
 	access: string
 }
 
+/* Authentication REST types */
+export interface TokenREST {
+	username: string,
+	tokens: Tokens
+}
+
+export const loginRESTLink: string = '/auth/login/';
+export interface LoginRESTSubmit {
+	username: string,
+	password: string,
+}
+
+export const registrationRESTLink: string = '/auth/register/';
+export interface RegistrationRESTSubmit extends LoginRESTSubmit {
+	secret_key: string
+}
+
+/* Objects returned by errors in the REST calls */
+export interface RESTError {
+	message: string | ReactElement,
+	type: string,
+	status: number,
+	statusText: string
+}
+
+/* React Function component for generating error message text */
+interface ErrorMessageTextProps extends RESTError { }
+const ErrorMessageText: React.FC<ErrorMessageTextProps> = ({ statusText, message }) => {
+	return (
+		<React.Fragment>
+			<strong>{statusText}</strong>: {message}
+		</React.Fragment>
+	);
+}
+
+/* Message returned when neither new refresh tokens can be retrieved, nor the API can be successfully reached */
+const UnreachableErrorMessage: string = "API is not successfully accessible. Please re-login and try again, otherwise, please contact support";
+
+/* JWT Access token refresh function that is called whenever the access token expires */
 async function getNewAccessToken(): Promise<boolean> {
 	try {
 		const tokens: Tokens = JSON.parse(localStorage.tokens);
@@ -53,7 +99,7 @@ async function getNewAccessToken(): Promise<boolean> {
 				refresh: tokens.refresh
 			};
 
-			const result: Result<RefreshTokensREST, Error> = await resolvePOSTCall<RefreshTokensREST, RefreshTokensRESTSubmit>('/auth/refresh_tokens/', data);
+			const result: Result<RefreshTokensREST, RESTError> = await resolvePOSTCall<RefreshTokensREST, RefreshTokensRESTSubmit>('/auth/refresh_tokens/', data, false, true);
 
 			result
 				.map(res => {
@@ -63,7 +109,7 @@ async function getNewAccessToken(): Promise<boolean> {
 					return null; // necessary to silence warning
 				})
 				.mapErr(err => {
-					console.error(err);
+					console.error(err.message);
 				});
 
 			return true;
@@ -75,7 +121,8 @@ async function getNewAccessToken(): Promise<boolean> {
 	}
 }
 
-export async function resolveGETCall<MessageT>(address: string, authentication: boolean = false, recursiveCall: boolean = false): Promise<Result<MessageT, Error>> {
+/* Helper function for making RESTful GET/retrieval calls */
+export async function resolveGETCall<MessageT>(address: string, authentication: boolean = false, recursiveCall: boolean = false): Promise<Result<MessageT, RESTError>> {
 	try {
 		var res: AxiosResponse<MessageT>;
 
@@ -89,8 +136,21 @@ export async function resolveGETCall<MessageT>(address: string, authentication: 
 
 		return ok(res.data);
 	} catch (error) {
-		if (recursiveCall)
-			return err(error);
+		if (recursiveCall) {
+			var retErr: RESTError;
+			const hasResponseMessage: boolean = error.response && error.response.data && error.response.data.message;
+
+			retErr = {
+				message: hasResponseMessage ? error.response.data.message : error.message,
+				type: hasResponseMessage ? "RESTError" : error.name,
+				status: hasResponseMessage ? error.response.status : 401,
+				statusText: hasResponseMessage ? error.response.statusText : "Unauthorized"
+			};
+
+			retErr.message = <ErrorMessageText {...retErr} />;
+
+			return err(retErr);
+		}
 
 		const successfullyGotNewAccess: boolean = await getNewAccessToken();
 
@@ -98,11 +158,18 @@ export async function resolveGETCall<MessageT>(address: string, authentication: 
 			return await resolveGETCall<MessageT>(address, authentication, true);
 		}
 
-		return err(error);
+		const unreachableErr: RESTError = {
+			message: UnreachableErrorMessage,
+			type: "RESTError",
+			status: 403,
+			statusText: "Forbidden"
+		};
+		return err(unreachableErr);
 	}
 }
 
-export async function resolvePOSTCall<MessageT, PayloadT>(address: string, data: PayloadT, authentication: boolean = false, recursiveCall: boolean = false): Promise<Result<MessageT, Error>> {
+/* Helper function for making RESTful POST/creation calls */
+export async function resolvePOSTCall<MessageT, PayloadT>(address: string, data: PayloadT, authentication: boolean = false, recursiveCall: boolean = false): Promise<Result<MessageT, RESTError>> {
 	try {
 		var res: AxiosResponse<MessageT>;
 
@@ -116,8 +183,21 @@ export async function resolvePOSTCall<MessageT, PayloadT>(address: string, data:
 
 		return ok(res.data);
 	} catch (error) {
-		if (recursiveCall)
-			return err(error);
+		if (recursiveCall) {
+			var retErr: RESTError;
+			const hasResponseMessage: boolean = error.response && error.response.data && error.response.data.message;
+
+			retErr = {
+				message: hasResponseMessage ? error.response.data.message : error.message,
+				type: hasResponseMessage ? "RESTError" : error.name,
+				status: hasResponseMessage ? error.response.status : 401,
+				statusText: hasResponseMessage ? error.response.statusText : "Unauthorized"
+			};
+
+			retErr.message = <ErrorMessageText {...retErr} />;
+
+			return err(retErr);
+		}
 
 		const successfullyGotNewAccess: boolean = await getNewAccessToken();
 
@@ -125,11 +205,18 @@ export async function resolvePOSTCall<MessageT, PayloadT>(address: string, data:
 			return await resolvePOSTCall<MessageT, PayloadT>(address, data, authentication, true);
 		}
 
-		return err(error);
+		const unreachableErr: RESTError = {
+			message: UnreachableErrorMessage,
+			type: "RESTError",
+			status: 403,
+			statusText: "Forbidden"
+		};
+		return err(unreachableErr);
 	}
 }
 
-export async function resolvePUTCall<MessageT, PayloadT>(address: string, data: PayloadT, authentication: boolean = false, recursiveCall: boolean = false): Promise<Result<MessageT, Error>> {
+/* Helper function for making RESTful PUT/update calls */
+export async function resolvePUTCall<MessageT, PayloadT>(address: string, data: PayloadT, authentication: boolean = false, recursiveCall: boolean = false): Promise<Result<MessageT, RESTError>> {
 	try {
 		var res: AxiosResponse<MessageT>;
 
@@ -143,8 +230,21 @@ export async function resolvePUTCall<MessageT, PayloadT>(address: string, data: 
 
 		return ok(res.data);
 	} catch (error) {
-		if (recursiveCall)
-			return err(error);
+		if (recursiveCall) {
+			var retErr: RESTError;
+			const hasResponseMessage: boolean = error.response && error.response.data && error.response.data.message;
+
+			retErr = {
+				message: hasResponseMessage ? error.response.data.message : error.message,
+				type: hasResponseMessage ? "RESTError" : error.name,
+				status: hasResponseMessage ? error.response.status : 401,
+				statusText: hasResponseMessage ? error.response.statusText : "Unauthorized"
+			};
+
+			retErr.message = <ErrorMessageText {...retErr} />;
+
+			return err(retErr);
+		}
 
 		const successfullyGotNewAccess: boolean = await getNewAccessToken();
 
@@ -152,11 +252,18 @@ export async function resolvePUTCall<MessageT, PayloadT>(address: string, data: 
 			return await resolvePUTCall<MessageT, PayloadT>(address, data, authentication, true);
 		}
 
-		return err(error);
+		const unreachableErr: RESTError = {
+			message: UnreachableErrorMessage,
+			type: "RESTError",
+			status: 403,
+			statusText: "Forbidden"
+		};
+		return err(unreachableErr);
 	}
 }
 
-export async function resolveDELETECall<MessageT>(address: string, authentication: boolean = false, recursiveCall: boolean = false): Promise<Result<MessageT, Error>> {
+/* Helper function for making RESTful DELETE calls */
+export async function resolveDELETECall<MessageT>(address: string, authentication: boolean = false, recursiveCall: boolean = false): Promise<Result<MessageT, RESTError>> {
 	try {
 		var res: AxiosResponse<MessageT>;
 
@@ -170,8 +277,21 @@ export async function resolveDELETECall<MessageT>(address: string, authenticatio
 
 		return ok(res.data);
 	} catch (error) {
-		if (recursiveCall)
-			return err(error);
+		if (recursiveCall) {
+			var retErr: RESTError;
+			const hasResponseMessage: boolean = error.response && error.response.data && error.response.data.message;
+
+			retErr = {
+				message: hasResponseMessage ? error.response.data.message : error.message,
+				type: hasResponseMessage ? "RESTError" : error.name,
+				status: hasResponseMessage ? error.response.status : 401,
+				statusText: hasResponseMessage ? error.response.statusText : "Unauthorized"
+			};
+
+			retErr.message = <ErrorMessageText {...retErr} />;
+
+			return err(retErr);
+		}
 
 		const successfullyGotNewAccess: boolean = await getNewAccessToken();
 
@@ -179,6 +299,12 @@ export async function resolveDELETECall<MessageT>(address: string, authenticatio
 			return await resolveDELETECall<MessageT>(address, authentication, true);
 		}
 
-		return err(error);
+		const unreachableErr: RESTError = {
+			message: UnreachableErrorMessage,
+			type: "RESTError",
+			status: 403,
+			statusText: "Forbidden"
+		};
+		return err(unreachableErr);
 	}
 }

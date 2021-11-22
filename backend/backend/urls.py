@@ -7,17 +7,25 @@
 from django.contrib import admin
 from django.urls import path, re_path
 from django.views.static import serve
+from rest_framework_simplejwt.views import TokenRefreshView
 
-from backend.views import FrontendHomeView, FrontendOtherView
+from . import views
 from . import settings
 
-NAMESPACE = 'api/'
+NAMESPACE = 'api'
 
 urlpatterns = [
-    path(NAMESPACE + 'admin/', admin.site.urls),
+	path(NAMESPACE + '/admin/', admin.site.urls, name="admin-page"),
 
-	path('', FrontendHomeView.as_view()),
-	path('other/', FrontendHomeView.as_view()),
+	path(NAMESPACE + '/', views.TestView.as_view(), name="api-test"),
+	
+	path(NAMESPACE + '/auth/login/', views.LoginView.as_view(), name="authentication-login"),
+	path(NAMESPACE + '/auth/register/', views.RegisterView.as_view(), name="authentication-register"),
+	path(NAMESPACE + '/auth/refresh_tokens/', TokenRefreshView.as_view(), name="authentication-refresh"),
 
-	re_path(r'^api/media/(?P<path>.*)$', serve, kwargs={'document_root': settings.MEDIA_ROOT})
+	path('', views.FrontendView.as_view(), name="frontend-home"),
+	path('other', views.FrontendView.as_view(), name="frontend-other"),
+	path('login', views.FrontendView.as_view(), name="frontend-login"),
+
+	re_path(r'^api/media/(?P<path>.*)$', serve, name="media-paths", kwargs={'document_root': settings.MEDIA_ROOT})
 ]

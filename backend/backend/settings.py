@@ -33,7 +33,8 @@ DEPLOYMENT_URL = "http://localhost:3000"
 
 ALLOWED_HOSTS = [
 	DEPLOYMENT_URL,
-	"localhost"
+	"localhost",
+	"testserver"
 ]
 
 
@@ -170,7 +171,7 @@ PASSWORD_HASHERS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-uk'
 
 TIME_ZONE = 'UTC'
 
@@ -184,3 +185,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'backend.User'
