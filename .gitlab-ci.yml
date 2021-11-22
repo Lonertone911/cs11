@@ -1,0 +1,75 @@
+#
+#  Copyright Jim Carty © 2021: cartyjim1@gmail.com
+#
+#  This file is subject to the terms and conditions defined in file 'LICENSE.txt', which is part of this source code package.
+#
+
+stages:
+  - build
+  - test
+
+build:frontend:
+  stage: build
+  needs: []
+  tags:
+    - docker
+  cache:
+    key: npm
+    policy: pull-push
+    paths:
+      - frontend/.npm/
+  
+  image: node:16.12-alpine
+
+  before_script:
+    - cd frontend
+    - npm ci --cache .npm --prefer-offline
+  
+  script:
+    - npm run build
+
+  artifacts:
+    paths:
+      - backend/frontend_build
+    expire_in: 1 day
+    when: always
+
+test:backend:
+  stage: test
+  needs: ["build:frontend"]
+  tags:
+    - docker
+
+  # image: ubuntu:20.04 # will work
+  image: python:3.8 # might work
+    
+  # before_script:
+  #   - apt update
+  #   - apt install -y python3 python3-pip
+
+  script:
+    - cd backend
+    - python -m pip install -r requirements.txt
+    - python3 manage.py makemigrations backend
+    - python3 manage.py migrate
+    - python3 manage.py test
+
+test:frontend:
+  stage: test
+  needs: []
+  tags:
+    - docker
+  cache:
+    key: npm
+    policy: pull-push
+    paths:
+      - frontend/.npm/
+  
+  image: node:16.12-alpine
+
+  before_script:
+    - cd frontend
+    - npm ci --cache .npm --prefer-offline
+  
+  script:
+      - npm test
